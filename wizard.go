@@ -406,144 +406,147 @@ func createPanel() {
 		deployType = DTPage
 	}
 
-	var projectName string
-	for {
-		projectName = generateRandomSubDomain(32)
-		fmt.Printf("\n%s The random generated name (%s) is: %s", info, fmtStr("Subdomain", GREEN, true), fmtStr(projectName, ORANGE, true))
-		if response := promptUser("- Please enter a custom name or press ENTER to use generated one: ", nil); response != "" {
-			if err := isValidSubDomain(response); err != nil {
-				failMessage(err.Error())
-				continue
-			}
-
-			projectName = response
-		}
-
-		var isAvailable bool
-		fmt.Printf("\n%s Checking domain availablity...\n", title)
-
-		if deployType == DTWorker {
-			isAvailable = isWorkerAvailable(ctx, projectName)
-		} else {
-			isAvailable = isPagesProjectAvailable(ctx, projectName)
-		}
-
-		if !isAvailable {
-			prompt := fmt.Sprintf("- This already exists! This will %s all panel settings, would you like to override it? (y/n): ", fmtStr("RESET", RED, true))
-			if response := promptUser(prompt, []string{"y", "n"}); strings.ToLower(response) == "n" {
-				continue
-			}
-		}
-
-		successMessage("Available!")
-		break
-	}
-
+	deployMode := promptUser("1- Easy mode.\n2- Custom mode.\n\n- Select: ", []string{"1", "2"})
+	projectName := generateRandomSubDomain(32)
 	uid := uuid.NewString()
-	fmt.Printf("\n%s The random generated %s is: %s", info, fmtStr("UUID", GREEN, true), fmtStr(uid, ORANGE, true))
-	for {
-		if response := promptUser("- Please enter a custom uid or press ENTER to use generated one: ", nil); response != "" {
-			if _, err := uuid.Parse(response); err != nil {
-				failMessage("UUID is not standard, please try again.")
-				continue
-			}
-
-			uid = response
-		}
-
-		break
-	}
-
 	trPass := generateTrPassword(12)
-	fmt.Printf("\n%s The random generated %s is: %s", info, fmtStr("\u0054\u0072\u006f\u006a\u0061\u006e password", GREEN, true), fmtStr(trPass, ORANGE, true))
-	for {
-		if response := promptUser("- Please enter a custom panel password or press ENTER to use generated one: ", nil); response != "" {
-			if !isValidTrPassword(response) {
-				failMessage("\u0054\u0072\u006f\u006a\u0061\u006e password cannot contain none standard character! Please try again.")
-				continue
-			}
-
-			trPass = response
-		}
-
-		break
-	}
-
-	proxyIP := ""
-	fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Proxy IP", GREEN, true), fmtStr("\u0062\u0070\u0062.yousef.isegaro.com", ORANGE, true))
-	for {
-		if response := promptUser("- Please enter custom Proxy IP/Domains or press ENTER to use default: ", nil); response != "" {
-			areValid := true
-			values := strings.SplitSeq(response, ",")
-			for v := range values {
-				trimmedValue := strings.TrimSpace(v)
-				if !isValidIpDomain(trimmedValue) && !isValidHost(trimmedValue) {
-					areValid = false
-					message := fmt.Sprintf("%s is not a valid IP or Domain. Please try again.", trimmedValue)
-					failMessage(message)
-				}
-			}
-
-			if !areValid {
-				continue
-			}
-
-			proxyIP = response
-		}
-
-		break
-	}
-
-	nat64Prefix := ""
-	fmt.Printf("\n%s The default %s are listed here: %s", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/\u0042\u0050\u0042-Worker-Panel/blob/main/NAT64Prefixes.md", ORANGE, true))
-	for {
-		if response := promptUser("- Please enter custom NAT64 Prefixes or press ENTER to use default: ", nil); response != "" {
-			areValid := true
-			values := strings.SplitSeq(response, ",")
-			for v := range values {
-				trimmedValue := strings.TrimSpace(v)
-				if !isValidIPv6(trimmedValue) {
-					areValid = false
-					message := fmt.Sprintf("%s is not a valid IPv6 address. Please try again.", trimmedValue)
-					failMessage(message)
-				}
-			}
-
-			if !areValid {
-				continue
-			}
-
-			nat64Prefix = response
-		}
-
-		break
-	}
-
-	fallback := ""
-	fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Fallback domain", GREEN, true), fmtStr("speed.cloudflare.com", ORANGE, true))
-	if response := promptUser("- Please enter a custom Fallback domain or press ENTER to use default: ", nil); response != "" {
-		fallback = response
-	}
-
 	subPath := generateSubURIPath(16)
-	fmt.Printf("\n%s The random generated %s is: %s", info, fmtStr("Subscription path", GREEN, true), fmtStr(subPath, ORANGE, true))
-	for {
-		if response := promptUser("- Please enter a custom Subscription path or press ENTER to use generated one: ", nil); response != "" {
-			if !isValidSubURIPath(response) {
-				failMessage("URI cannot contain none standard character! Please try again.")
-				continue
+	proxyIP := ""
+	nat64Prefix := ""
+	fallback := ""
+	var customDomain string
+
+	if deployMode == "2" {
+		for {
+			fmt.Printf("\n%s The random generated subdomain (%s) is: %s", info, fmtStr("Subdomain", GREEN, true), fmtStr(projectName, ORANGE, true))
+			if response := promptUser("- Please enter a custom subdomain or press ENTER to use generated one: ", nil); response != "" {
+				if err := isValidSubDomain(response); err != nil {
+					failMessage(err.Error())
+					continue
+				}
+
+				projectName = response
 			}
 
-			subPath = response
+			var isAvailable bool
+			fmt.Printf("\n%s Checking domain availablity...\n", title)
+
+			if deployType == DTWorker {
+				isAvailable = isWorkerAvailable(ctx, projectName)
+			} else {
+				isAvailable = isPagesProjectAvailable(ctx, projectName)
+			}
+
+			if !isAvailable {
+				prompt := fmt.Sprintf("- Subdomain already exists! This will %s all panel settings, would you like to override it? (y/n): ", fmtStr("RESET", RED, true))
+				if response := promptUser(prompt, []string{"y", "n"}); strings.ToLower(response) == "n" {
+					continue
+				}
+			}
+
+			successMessage("Available!")
+			break
 		}
 
-		break
-	}
+		fmt.Printf("\n%s The random generated %s is: %s", info, fmtStr("UUID", GREEN, true), fmtStr(uid, ORANGE, true))
+		for {
+			if response := promptUser("- Please enter a custom uid or press ENTER to use generated one: ", nil); response != "" {
+				if _, err := uuid.Parse(response); err != nil {
+					failMessage("UUID is not standard, please try again.")
+					continue
+				}
 
-	var customDomain string
-	fmt.Printf("\n%s You can set %s ONLY if you registered domain on this cloudflare account.", info, fmtStr("Custom domain", GREEN, true))
-	if response := promptUser("- Please enter a custom domain (if you have any) or press ENTER to ignore: ", nil); response != "" {
-		customDomain = response
+				uid = response
+			}
+
+			break
+		}
+
+		fmt.Printf("\n%s The random generated %s is: %s", info, fmtStr("\u0054\u0072\u006f\u006a\u0061\u006e password", GREEN, true), fmtStr(trPass, ORANGE, true))
+		for {
+			if response := promptUser("- Please enter a custom panel password or press ENTER to use generated one: ", nil); response != "" {
+				if !isValidTrPassword(response) {
+					failMessage("\u0054\u0072\u006f\u006a\u0061\u006e password cannot contain none standard character! Please try again.")
+					continue
+				}
+
+				trPass = response
+			}
+
+			break
+		}
+
+		fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Proxy IP", GREEN, true), fmtStr("\u0062\u0070\u0062.yousef.isegaro.com", ORANGE, true))
+		for {
+			if response := promptUser("- Please enter custom Proxy IP/Domains or press ENTER to use default: ", nil); response != "" {
+				areValid := true
+				values := strings.SplitSeq(response, ",")
+				for v := range values {
+					trimmedValue := strings.TrimSpace(v)
+					if !isValidIpDomain(trimmedValue) && !isValidHost(trimmedValue) {
+						areValid = false
+						message := fmt.Sprintf("%s is not a valid IP or Domain. Please try again.", trimmedValue)
+						failMessage(message)
+					}
+				}
+
+				if !areValid {
+					continue
+				}
+
+				proxyIP = response
+			}
+
+			break
+		}
+
+		fmt.Printf("\n%s The default %s are listed here: %s", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/\u0042\u0050\u0042-Worker-Panel/blob/main/docs/NAT64Prefixes.md", ORANGE, true))
+		for {
+			if response := promptUser("- Please enter custom NAT64 Prefixes or press ENTER to use default: ", nil); response != "" {
+				areValid := true
+				values := strings.SplitSeq(response, ",")
+				for v := range values {
+					trimmedValue := strings.TrimSpace(v)
+					if !isValidIPv6(trimmedValue) {
+						areValid = false
+						message := fmt.Sprintf("%s is not a valid IPv6 address. Please try again.", trimmedValue)
+						failMessage(message)
+					}
+				}
+
+				if !areValid {
+					continue
+				}
+
+				nat64Prefix = response
+			}
+
+			break
+		}
+
+		fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Fallback domain", GREEN, true), fmtStr("www.hcaptcha.com", ORANGE, true))
+		if response := promptUser("- Please enter a custom Fallback domain or press ENTER to use default: ", nil); response != "" {
+			fallback = response
+		}
+
+		fmt.Printf("\n%s The random generated %s is: %s", info, fmtStr("Subscription path", GREEN, true), fmtStr(subPath, ORANGE, true))
+		for {
+			if response := promptUser("- Please enter a custom Subscription path or press ENTER to use generated one: ", nil); response != "" {
+				if !isValidSubURIPath(response) {
+					failMessage("URI cannot contain none standard character! Please try again.")
+					continue
+				}
+
+				subPath = response
+			}
+
+			break
+		}
+
+		fmt.Printf("\n%s You can set %s ONLY if you registered domain on this cloudflare account.", info, fmtStr("Custom domain", GREEN, true))
+		if response := promptUser("- Please enter a custom domain (if you have any) or press ENTER to ignore: ", nil); response != "" {
+			customDomain = response
+		}
 	}
 
 	fmt.Printf("\n%s Creating KV namespace...\n", title)
