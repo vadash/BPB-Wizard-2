@@ -12,12 +12,11 @@ import (
 )
 
 var (
-	srcPath    string
-	workerPath string
-	cachePath  string
-	isAndroid  = false
-	workerURL  = "https://github.com/bia-pain-bache/BPB-Worker-Panel/releases/latest/download/worker.js"
-	VERSION    = "dev"
+	workerJS  []byte
+	cachePath string
+	isAndroid = false
+	workerURL = "https://github.com/bia-pain-bache/\u0042\u0050\u0042-Worker-Panel/releases/latest/download/worker.js"
+	VERSION   = "dev"
 )
 
 func init() {

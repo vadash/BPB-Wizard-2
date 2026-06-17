@@ -5,11 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"mime/multipart"
 	"net/textproto"
-	"os"
 	"strings"
 	"time"
 
@@ -37,7 +35,7 @@ type ScriptUpdateParamsMetadataForm struct {
 	Tags               []string            `form:"tags"`
 	TailConsumers      []string            `form:"tail_consumers"`
 	Logpush            bool                `form:"logpush"`
-	jsPath             string
+	jsContent          []byte
 }
 
 func (sp ScriptUpdateParams) MarshalMultipart() ([]byte, string, error) {
@@ -115,13 +113,11 @@ func (sp ScriptUpdateParams) MarshalMultipart() ([]byte, string, error) {
 		return nil, "", fmt.Errorf("error creating file part: %w", err)
 	}
 
-	file, err := os.Open(sp.Metadata.jsPath)
-	if err != nil {
-		return nil, "", fmt.Errorf("error opening file: %w", err)
+	if len(sp.Metadata.jsContent) == 0 {
+		return nil, "", fmt.Errorf("worker.js content is empty")
 	}
-	defer file.Close()
 
-	_, err = io.Copy(filePart, file)
+	_, err = filePart.Write(sp.Metadata.jsContent)
 	if err != nil {
 		return nil, "", fmt.Errorf("error copying file content: %w", err)
 	}
@@ -187,7 +183,7 @@ func createWorker(ctx context.Context, name string, uid string, pass string, pro
 		Metadata: ScriptUpdateParamsMetadataForm{
 			Bindings:          envVars,
 			MainModule:        "worker.js",
-			jsPath:            workerPath,
+			jsContent:         workerJS,
 			CompatibilityDate: time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
 			CompatibilityFlags: []string{
 				"nodejs_compat",
@@ -318,7 +314,7 @@ func updateWorker(ctx context.Context, name string) error {
 		AccountID: cfAccount.ID,
 		Metadata: ScriptUpdateParamsMetadataForm{
 			MainModule: "worker.js",
-			jsPath:     workerPath,
+			jsContent:  workerJS,
 		},
 	}
 

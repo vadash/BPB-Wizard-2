@@ -80,15 +80,18 @@ func renderHeader() {
 }
 
 func initPaths() {
-	var err error
-	srcPath, err = os.MkdirTemp("", ".bpb-wizard")
-	if err != nil {
-		failMessage("Failed to create temp directory.")
+	dir, err := os.UserCacheDir()
+	if err != nil || dir == "" {
+		dir = os.TempDir()
+	}
+
+	cacheDir := filepath.Join(dir, "\u0042\u0050\u0042-Wizard")
+	if err := os.MkdirAll(cacheDir, 0700); err != nil {
+		failMessage("Failed to create cache directory.")
 		log.Fatalln(err)
 	}
 
-	workerPath = filepath.Join(srcPath, "worker.js")
-	cachePath = filepath.Join(srcPath, "tld.cache")
+	cachePath = filepath.Join(cacheDir, "tld.cache")
 }
 
 func fmtStr(str string, color string, isBold bool) string {

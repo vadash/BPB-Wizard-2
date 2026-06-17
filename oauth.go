@@ -42,8 +42,14 @@ var (
 	}
 )
 
-func NewClient(token *oauth2.Token) *cf.Client {
-	return cf.NewClient(option.WithAPIToken(token.AccessToken))
+func NewClient(ctx context.Context, token *oauth2.Token) (*cf.Client, *oauth2.Token, error) {
+	tokenSource := config.TokenSource(ctx, token)
+	refreshedToken, err := tokenSource.Token()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cf.NewClient(option.WithAPIToken(refreshedToken.AccessToken)), refreshedToken, nil
 }
 
 func getAccount(ctx context.Context) (*accounts.Account, error) {
@@ -102,6 +108,45 @@ func login() {
 		failMessage("Failed to login.")
 		log.Fatalln(err)
 	}
+}
+
+func ensureCloudflareAuth(ctx context.Context) error {
+	if cfClient != nil && cfAccount != nil {
+		return nil
+	}
+
+	store := newTokenStore()
+	if token, err := store.Load(); err == nil {
+		client, refreshedToken, err := NewClient(ctx, token)
+		if err == nil {
+			cfClient = client
+			account, err := getAccount(ctx)
+			if err == nil {
+				cfAccount = account
+				_ = store.Save(refreshedToken)
+				return nil
+			}
+		}
+
+		_ = store.Delete()
+	}
+
+	go login()
+	token := <-obtainedToken
+
+	client, refreshedToken, err := NewClient(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	cfClient = client
+	account, err := getAccount(ctx)
+	if err != nil {
+		return err
+	}
+
+	cfAccount = account
+	return store.Save(refreshedToken)
 }
 
 func callback(w http.ResponseWriter, r *http.Request) {

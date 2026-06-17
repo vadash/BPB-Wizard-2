@@ -4,6 +4,7 @@
 !go.sum
 !main.go
 !oauth.go
+!token_store.go
 !pages.go
 !workers.go
 !wizard.go

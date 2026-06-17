@@ -5,11 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"mime/multipart"
 	"net/textproto"
-	"os"
 	"strings"
 	"time"
 
@@ -24,7 +22,7 @@ type projectDeploymentNewParams struct {
 	Branch    string                `form:"branch"`
 	Manifest  string                `form:"manifest"`
 	WorkerJS  *multipart.FileHeader `form:"_worker.js"`
-	jsPath    string
+	jsContent []byte
 }
 
 func (pdp projectDeploymentNewParams) MarshalMultipart() ([]byte, string, error) {
@@ -68,13 +66,11 @@ func (pdp projectDeploymentNewParams) MarshalMultipart() ([]byte, string, error)
 		return nil, "", fmt.Errorf("error creating file part: %w", err)
 	}
 
-	file, err := os.Open(pdp.jsPath)
-	if err != nil {
-		return nil, "", fmt.Errorf("error opening file: %w", err)
+	if len(pdp.jsContent) == 0 {
+		return nil, "", fmt.Errorf("worker.js content is empty")
 	}
-	defer file.Close()
 
-	_, err = io.Copy(filePart, file)
+	_, err = filePart.Write(pdp.jsContent)
 	if err != nil {
 		return nil, "", fmt.Errorf("error copying file content: %w", err)
 	}
@@ -173,7 +169,7 @@ func createPagesDeployment(ctx context.Context, project *pages.Project) (*pages.
 		Branch:    "main",
 		Manifest:  "{}",
 		WorkerJS:  &multipart.FileHeader{Filename: "worker.js"},
-		jsPath:    workerPath,
+		jsContent: workerJS,
 	}
 	data, ct, err := param.MarshalMultipart()
 	if err != nil {
@@ -335,7 +331,7 @@ func updatePagesProject(ctx context.Context, projectName string) error {
 		Branch:    "main",
 		Manifest:  "{}",
 		WorkerJS:  &multipart.FileHeader{Filename: "worker.js"},
-		jsPath:    workerPath,
+		jsContent: workerJS,
 	}
 	data, ct, err := param.MarshalMultipart()
 	if err != nil {
