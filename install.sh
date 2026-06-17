@@ -16,7 +16,7 @@ case "$ARCH" in
 esac
 
 BINARY="Wizard"
-ARCHIVE="${BINARY}-${OS}-${ARCH}.tar.gz"
+ARCHIVE="BPB-Wizard-${OS}-${ARCH}.tar.gz"
 LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION)
 
 if [ -x "./${BINARY}" ]; then
