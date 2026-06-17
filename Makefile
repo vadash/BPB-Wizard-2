@@ -24,7 +24,7 @@ build:
 	fi; \
 	echo "Building for $(GOOS)-$(GOARCH)..."; \
 	outdir="$(OUT_DIR)/$(APP_NAME)-$(GOOS)-$(GOARCH)"; \
-	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -trimpath -ldflags '$(LDFLAGS)' -o "$$outdir/$(APP_NAME)$$ext"; \
+	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -trimpath -ldflags '$(LDFLAGS)' -o "$$outdir/Wizard$$ext"; \
 	cp LICENSE $$outdir/; \
 	archive="$(DIST_DIR)/$(APP_NAME)-$(GOOS)-$(GOARCH)"; \
 	if [ "$(GOOS)" = "windows" ] || [ "$(GOOS)" = "darwin" ]; then \
