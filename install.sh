@@ -17,7 +17,7 @@ esac
 
 BINARY="BPB-Wizard"
 ARCHIVE="${BINARY}-${OS}-${ARCH}.tar.gz"
-LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/\u0054\u0072\u006f\u006a\u0061\u006e-Wizard/main/VERSION)
+LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/VERSION)
 
 if [ -x "./${BINARY}" ]; then
     INSTALLED_VERSION=$("./${BINARY}" --version)

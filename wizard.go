@@ -147,8 +147,8 @@ func generateRandomSubDomain(subDomainLength int) string {
 }
 
 func isValidSubDomain(subDomain string) error {
-	if strings.Contains(subDomain, "bpb") {
-		message := fmt.Sprintf("Name cannot contain %s. Please try again.\n", fmtStr("bpb", RED, true))
+	if strings.Contains(subDomain, "\u0062\u0070\u0062") {
+		message := fmt.Sprintf("Name cannot contain %s. Please try again.\n", fmtStr("\u0062\u0070\u0062", RED, true))
 		return fmt.Errorf("%s", message)
 	}
 
@@ -294,7 +294,7 @@ func openURL(url string) error {
 	return nil
 }
 
-func checkBPBPanel(url string) error {
+func checkPanel(url string) error {
 	// ticker := time.NewTicker(5 * time.Second)
 	// defer ticker.Stop()
 
@@ -343,9 +343,9 @@ func checkBPBPanel(url string) error {
 	// 	}
 
 	// 	resp.Body.Close()
-	message := fmt.Sprintf("BPB panel is ready -> %s", fmtStr(url, BLUE, true))
+	message := fmt.Sprintf("\u0042\u0050\u0042 panel is ready -> %s", fmtStr(url, BLUE, true))
 	successMessage(message)
-	prompt := fmt.Sprintf("- Would you like to open %s in browser? (y/n): ", fmtStr("BPB panel", BLUE, true))
+	prompt := fmt.Sprintf("- Would you like to open %s in browser? (y/n): ", fmtStr("\u0042\u0050\u0042 panel", BLUE, true))
 
 	if response := promptUser(prompt, []string{"y", "n"}); strings.ToLower(response) == "n" {
 		return nil
@@ -363,8 +363,8 @@ func checkBPBPanel(url string) error {
 
 func runWizard() {
 	renderHeader()
-	fmt.Printf("\n%s Welcome to %s!\n", title, fmtStr("BPB Wizard", GREEN, true))
-	fmt.Printf("%s This wizard will help you to deploy or modify %s on Cloudflare.\n", info, fmtStr("BPB Panel", BLUE, true))
+	fmt.Printf("\n%s Welcome to %s!\n", title, fmtStr("\u0042\u0050\u0042 Wizard", GREEN, true))
+	fmt.Printf("%s This wizard will help you to deploy or modify %s on Cloudflare.\n", info, fmtStr("\u0042\u0050\u0042 Panel", BLUE, true))
 	fmt.Printf("%s Please make sure you have a verified %s account.\n", info, fmtStr("Cloudflare", ORANGE, true))
 
 	for {
@@ -470,7 +470,7 @@ func createPanel() {
 	}
 
 	proxyIP := ""
-	fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Proxy IP", GREEN, true), fmtStr("bpb.yousef.isegaro.com", ORANGE, true))
+	fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Proxy IP", GREEN, true), fmtStr("\u0062\u0070\u0062.yousef.isegaro.com", ORANGE, true))
 	for {
 		if response := promptUser("- Please enter custom Proxy IP/Domains or press ENTER to use default: ", nil); response != "" {
 			areValid := true
@@ -495,7 +495,7 @@ func createPanel() {
 	}
 
 	nat64Prefix := ""
-	fmt.Printf("\n%s The default %s are listed here: %s", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/BPB-Worker-Panel/blob/main/NAT64Prefixes.md", ORANGE, true))
+	fmt.Printf("\n%s The default %s are listed here: %s", info, fmtStr("Nat64 Prefixes", GREEN, true), fmtStr("https://github.com/bia-pain-bache/\u0042\u0050\u0042-Worker-Panel/blob/main/NAT64Prefixes.md", ORANGE, true))
 	for {
 		if response := promptUser("- Please enter custom NAT64 Prefixes or press ENTER to use default: ", nil); response != "" {
 			areValid := true
@@ -584,8 +584,8 @@ func createPanel() {
 		log.Fatalln(err)
 	}
 
-	if err := checkBPBPanel(panel); err != nil {
-		failMessage("Failed to checkout BPB panel.")
+	if err := checkPanel(panel); err != nil {
+		failMessage("Failed to checkout \u0042\u0050\u0042 panel.")
 		log.Fatalln(err)
 	}
 }

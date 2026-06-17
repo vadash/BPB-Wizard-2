@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	tokenStoreService = "BPB-Wizard"
+	tokenStoreService = "\u0042\u0050\u0042-Wizard"
 	tokenStoreKey     = "cloudflare-oauth-token"
 )
 
@@ -72,7 +72,7 @@ func (s tokenStore) saveKeyring(token *oauth2.Token) error {
 		Key:         tokenStoreKey,
 		Data:        data,
 		Label:       "Cloudflare OAuth token",
-		Description: "OAuth token used by BPB-Wizard to access Cloudflare",
+		Description: "OAuth token used by wizard to access Cloudflare",
 	})
 }
 
@@ -149,7 +149,7 @@ func tokenFilePath() string {
 		}
 	}
 
-	return filepath.Join(dir, "BPB-Wizard", "oauth-token.json")
+	return filepath.Join(dir, "\u0042\u0050\u0042-Wizard", "oauth-token.json")
 }
 
 func encodeToken(token *oauth2.Token) ([]byte, error) {
