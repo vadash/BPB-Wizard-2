@@ -19,6 +19,8 @@ jobs:
             goarch: arm
           - goos: darwin
             goarch: 386
+          - goos: windows
+            goarch: arm
       fail-fast: false
 
     steps:
