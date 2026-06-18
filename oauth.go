@@ -38,6 +38,7 @@ var (
 			"workers_routes:write", "workers_scripts:write", "workers_tail:read",
 			"d1:write", "pages:write", "pages:read", "zone:read", "ssl_certs:write",
 			"ai:write", "queues:write", "pipelines:write", "secrets_store:write",
+			"offline_access",
 		},
 	}
 )
