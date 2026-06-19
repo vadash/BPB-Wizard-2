@@ -5,10 +5,13 @@ import (
 	"crypto/sha256"
 	_ "embed"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand/v2"
 	"net/http"
+	"strconv"
+	"strings"
 
 	cf "github.com/cloudflare/cloudflare-go/v4"
 	"github.com/cloudflare/cloudflare-go/v4/accounts"
@@ -54,12 +57,25 @@ func NewClient(ctx context.Context, token *oauth2.Token) (*cf.Client, *oauth2.To
 }
 
 func getAccount(ctx context.Context) (*accounts.Account, error) {
+	res, err := getAccounts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(res) == 0 {
+		return nil, fmt.Errorf("no Cloudflare accounts found")
+	}
+
+	return &res[0], nil
+}
+
+func getAccounts(ctx context.Context) ([]accounts.Account, error) {
 	res, err := cfClient.Accounts.List(ctx, accounts.AccountListParams{})
 	if err != nil {
 		return nil, fmt.Errorf("error listing accounts - %v", err)
 	}
 
-	return &res.Result[0], nil
+	return res.Result, nil
 }
 
 func generateAuthURL() string {
@@ -117,21 +133,69 @@ func ensureCloudflareAuth(ctx context.Context) error {
 	}
 
 	store := newTokenStore()
-	if token, err := store.Load(); err == nil {
-		client, refreshedToken, err := NewClient(ctx, token)
-		if err == nil {
-			cfClient = client
-			account, err := getAccount(ctx)
-			if err == nil {
-				cfAccount = account
-				_ = store.Save(refreshedToken)
+	loginStore, err := store.LoadLogins()
+	if err == nil && len(loginStore.Logins) > 0 {
+		login, shouldLogin := selectStoredCloudflareLogin(loginStore)
+		if !shouldLogin {
+			if err := useCloudflareLogin(ctx, store, login); err == nil {
 				return nil
 			}
-		}
 
-		_ = store.Delete()
+			failMessage("Saved Cloudflare login is expired or invalid.")
+			_ = store.DeleteLogin(login.Email)
+		}
 	}
 
+	return loginCloudflare(ctx, store)
+}
+
+func useCloudflareLogin(ctx context.Context, store tokenStore, login cloudflareLogin) error {
+	if login.Token == nil {
+		return fmt.Errorf("saved Cloudflare login has no token")
+	}
+	originalEmail := login.Email
+
+	client, refreshedToken, err := NewClient(ctx, login.Token)
+	if err != nil {
+		return err
+	}
+
+	cfClient = client
+
+	accountsList, err := getAccounts(ctx)
+	if err != nil {
+		return err
+	}
+
+	account, err := selectCloudflareAccount(accountsList)
+	if err != nil {
+		return err
+	}
+
+	cfAccount = account
+	login.Token = refreshedToken
+
+	user, err := cfClient.User.Get(ctx)
+	if err == nil {
+		login.Email = cloudflareUserEmail(user.JSON.RawJSON())
+	}
+
+	if login.Email == "" {
+		login.Email = originalEmail
+	}
+
+	if err := store.SaveLogin(login); err != nil {
+		return err
+	}
+
+	if originalEmail != "" && originalEmail != login.Email {
+		_ = store.DeleteLogin(originalEmail)
+	}
+
+	return nil
+}
+
+func loginCloudflare(ctx context.Context, store tokenStore) error {
 	go login()
 	token := <-obtainedToken
 
@@ -141,13 +205,95 @@ func ensureCloudflareAuth(ctx context.Context) error {
 	}
 
 	cfClient = client
-	account, err := getAccount(ctx)
+	accountsList, err := getAccounts(ctx)
+	if err != nil {
+		return err
+	}
+
+	account, err := selectCloudflareAccount(accountsList)
 	if err != nil {
 		return err
 	}
 
 	cfAccount = account
-	return store.Save(refreshedToken)
+
+	login := cloudflareLogin{
+		Email: "Cloudflare user",
+		Token: refreshedToken,
+	}
+
+	user, err := cfClient.User.Get(ctx)
+	if err == nil {
+		login.Email = cloudflareUserEmail(user.JSON.RawJSON())
+	}
+
+	return store.SaveLogin(login)
+}
+
+func selectStoredCloudflareLogin(store cloudflareLoginStore) (cloudflareLogin, bool) {
+	var message strings.Builder
+	var answers []string
+
+	for i, login := range store.Logins {
+		active := ""
+		if login.Email == store.ActiveEmail {
+			active = fmtStr(" [active]", GREEN, true)
+		}
+		message.WriteString(fmt.Sprintf("%d- %s%s\n", i+1, login.Email, active))
+		answers = append(answers, strconv.Itoa(i+1))
+	}
+
+	loginOption := len(store.Logins) + 1
+	message.WriteString(fmt.Sprintf("%d- %s\n\n- Select: ", loginOption, fmtStr("Login with a new Cloudflare account.", ORANGE, true)))
+	answers = append(answers, strconv.Itoa(loginOption))
+
+	response := promptUser(message.String(), answers)
+	selected, _ := strconv.Atoi(response)
+	if selected == loginOption {
+		return cloudflareLogin{}, true
+	}
+
+	return store.Logins[selected-1], false
+}
+
+func selectCloudflareAccount(accountsList []accounts.Account) (*accounts.Account, error) {
+	if len(accountsList) == 0 {
+		return nil, fmt.Errorf("no Cloudflare accounts found")
+	}
+
+	if len(accountsList) == 1 {
+		return &accountsList[0], nil
+	}
+
+	var message strings.Builder
+	var answers []string
+	message.WriteString("Cloudflare accounts:\n")
+	for i, account := range accountsList {
+		message.WriteString(fmt.Sprintf("%d- %s\n", i+1, account.Name))
+		answers = append(answers, strconv.Itoa(i+1))
+	}
+	message.WriteString("\n- Select: ")
+
+	response := promptUser(message.String(), answers)
+	selected, _ := strconv.Atoi(response)
+	return &accountsList[selected-1], nil
+}
+
+func cloudflareUserEmail(rawJSON string) string {
+	var user struct {
+		Email string `json:"email"`
+		ID    string `json:"id"`
+	}
+
+	if err := json.Unmarshal([]byte(rawJSON), &user); err != nil {
+		return ""
+	}
+
+	if user.Email != "" {
+		return user.Email
+	}
+
+	return user.ID
 }
 
 func callback(w http.ResponseWriter, r *http.Request) {

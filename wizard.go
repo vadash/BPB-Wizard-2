@@ -367,6 +367,12 @@ func runWizard() {
 	fmt.Printf("%s This wizard will help you to deploy or modify %s on Cloudflare.\n", info, fmtStr("\u0042\u0050\u0042 Panel", BLUE, true))
 	fmt.Printf("%s Please make sure you have a verified %s account.\n", info, fmtStr("Cloudflare", ORANGE, true))
 
+	ctx := context.Background()
+	if err := ensureCloudflareAuth(ctx); err != nil {
+		failMessage("Failed to login Cloudflare.")
+		log.Fatalln(err)
+	}
+
 	for {
 		message := fmt.Sprintf("1- %s a new panel.\n2- %s an existing panel.\n\n- Select: ", fmtStr("CREATE", GREEN, true), fmtStr("MODIFY", RED, true))
 		response := promptUser(message, []string{"1", "2"})
@@ -388,11 +394,7 @@ func runWizard() {
 func createPanel() {
 	ctx := context.Background()
 	var err error
-	if err := ensureCloudflareAuth(ctx); err != nil {
-		failMessage("Failed to login Cloudflare.")
-		log.Fatalln(err)
-	}
-
+	
 	fmt.Printf("\n%s Get settings...\n", title)
 	fmt.Printf("\n%s You can use %s or %s method to deploy.\n", info, fmtStr("Workers", ORANGE, true), fmtStr("Pages", ORANGE, true))
 	fmt.Printf("%s %s: If you choose %s, sometimes it takes up to 5 minutes until you can access panel, so please keep calm!\n", info, warning, fmtStr("Pages", ORANGE, true))

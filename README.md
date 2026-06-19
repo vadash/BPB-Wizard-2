@@ -1,6 +1,6 @@
 <h1 align="center">💦 BPB Wizard</h1>
 
-This project aims to facilitate the deployment and management process of [BPB Panel](https://github.com/bia-pain-bache/BPB-Worker-Panel) and prevent user mistakes during deployments. It supports both Workers and Pages methods and is highly recommended to use.
+This project aims to facilitate the deployment and management process of [BPB Panel](https://github.com/bia-pain-bache/BPB-Worker-Panel) and prevent user mistakes during deployments.
 
 <p align="center">
   <img src="assets/wizard.jpg">
@@ -18,16 +18,9 @@ To use this method, all you need is a Cloudflare account. You can [sign up here]
 > [!WARNING]
 > If you're connected to a VPN, disconnect it.
 
-#### Windows - macOS
+#### Android (Termux) - Linux - macOS
 
-Based on your operating system, [download the ZIP file](https://github.com/bia-pain-bache/BPB-Wizard/releases/latest), unzip it, and run the program.
-
-> [!IMPORTANT]  
-> This program downloads `worker.js` from github to deploy to Cloudflare and is not signed by a certificate. This makes Anti Viruses detect it as some kind of Trojan/Downloader threat. You have to disable your Anti Virus before running the program.
-
-#### Android (Termux) - Linux
-
-Android users who have Termux installed on their device and Linux users can use this bash:
+Android users who have Termux installed on their device, Linux and macOS users can use this bash:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/main/install.sh)
@@ -36,17 +29,20 @@ bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Wizard/ma
 > [!IMPORTANT]  
 > Be sure to download and install Termux only from its [official source](https://github.com/termux/termux-app/releases/latest). Installing via Google Play might cause issues.
 
-The first question asks whether you want to create a new panel or modify existing panels in the account.
+#### Windows
 
-Then logs into your Cloudflare account, return to the terminal and asks you a series of questions.
+Based on your operating system, [download the ZIP file](https://github.com/bia-pain-bache/BPB-Wizard/releases/latest), unzip it, and run the program.
 
-If you choose option 1, it will ask a series of configuration questions. You can use the default values or input your own. In the end, it opens the panel for you in your browser — that’s it.
+> [!IMPORTANT]  
+> This program downloads `worker.js` from github to deploy to Cloudflare and is not signed by a certificate. This makes Anti Viruses detect it as some kind of Trojan/Downloader threat. You have to disable your Anti Virus before running the program.
 
-> [!TIP]
-> For each setting it asks about, it has already generated a secure, personal value for you. You can simply press Enter to accept it and move on to the next question, or input your own values.
+## 🌟 Features
 
-If you choose option 2, it lists deployed Workers and Pages projects and you can choose which one to modify.
+1. **Multi login**: You can manage several Cloudflare accounts without logging in (Only first time on a device).
+2. **All in one**: Supports creating, listing, deleting and updating BPB panels.
+3. **Methods**: Both Pages and Workers deployments are supported.
+4. **Cross platform**: Works on all major operating systems i.e. Windows, Android (Termux), macOS and Linux.
 
-## Updating Panel
+## 💡 Updating or deleting Panel
 
-Just run wizard and select option 2 for the first question. It will show you a list of project names in your account — you can choose any to update to the latest stable version or delete.
+Just run wizard and select option 2 (Modify). It shows you a list of project names in your account — you can choose any to update to the latest stable version or delete.
