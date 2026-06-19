@@ -30,10 +30,7 @@ func newTokenStore() tokenStore {
 func (s tokenStore) LoadLogins() (cloudflareLoginStore, error) {
 	data, err := os.ReadFile(tokenFilePath())
 	if err != nil {
-		data, err = os.ReadFile(legacyTokenFilePath())
-		if err != nil {
-			return cloudflareLoginStore{}, err
-		}
+		return cloudflareLoginStore{}, err
 	}
 
 	if strings.TrimSpace(string(data)) == "" {
