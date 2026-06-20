@@ -129,7 +129,7 @@ func (sp ScriptUpdateParams) MarshalMultipart() ([]byte, string, error) {
 	return body.Bytes(), writer.FormDataContentType(), nil
 }
 
-func createWorker(ctx context.Context, name string, uid string, pass string, proxy string, nat64Prefix string, fallback string, sub string, kv *kv.Namespace) (*workers.ScriptUpdateResponse, error) {
+func createWorker(ctx context.Context, name string, uid string, pass string, proxy string, nat64Prefix string, fallback string, sub string, kv *kv.Namespace, placement string) (*workers.ScriptUpdateResponse, error) {
 
 	envVars := []map[string]string{
 		{
@@ -189,7 +189,7 @@ func createWorker(ctx context.Context, name string, uid string, pass string, pro
 				"nodejs_compat",
 			},
 			Observability: map[string]bool{"enabled": false},
-			Placement:     map[string]string{},
+			Placement:     map[string]string{"mode": "smart", "region": placement},
 			Tags:          []string{},
 			TailConsumers: []string{},
 			Logpush:       false,
@@ -355,6 +355,7 @@ func deployWorker(
 	sub string,
 	kvNamespace *kv.Namespace,
 	customDomain string,
+	placement string,
 ) (
 	panelURL string,
 	err error,
@@ -362,7 +363,7 @@ func deployWorker(
 	for {
 		fmt.Printf("\n%s Creating Worker...\n", title)
 
-		_, err := createWorker(ctx, name, uid, pass, proxy, nat64Prefix, fallback, sub, kvNamespace)
+		_, err := createWorker(ctx, name, uid, pass, proxy, nat64Prefix, fallback, sub, kvNamespace, placement)
 		if err != nil {
 			failMessage("Failed to deploy worker.")
 			log.Printf("%v\n\n", err)

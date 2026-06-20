@@ -416,6 +416,7 @@ func createPanel() {
 	proxyIP := ""
 	nat64Prefix := ""
 	fallback := ""
+	placement := ""
 	var customDomain string
 
 	if deployMode == "2" {
@@ -549,6 +550,19 @@ func createPanel() {
 		if response := promptUser("- Please enter a custom domain (if you have any) or press ENTER to ignore: ", nil); response != "" {
 			customDomain = response
 		}
+
+		if deployType == DTWorker {
+			fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Placement region", GREEN, true), fmtStr("azure:finlandcentral", ORANGE, true))
+			if response := promptUser("- Please enter a custom Placement region or press ENTER to use default: ", nil); response != "" {
+				placement = response
+			} else {
+				placement = "azure:finlandcentral"
+			}
+		}
+	}
+
+	if deployType == DTWorker && placement == "" {
+		placement = "azure:finlandcentral"
 	}
 
 	fmt.Printf("\n%s Creating KV namespace...\n", title)
@@ -579,7 +593,7 @@ func createPanel() {
 
 	switch deployType {
 	case DTWorker:
-		panel, err = deployWorker(ctx, projectName, uid, trPass, proxyIP, nat64Prefix, fallback, subPath, kvNamespace, customDomain)
+		panel, err = deployWorker(ctx, projectName, uid, trPass, proxyIP, nat64Prefix, fallback, subPath, kvNamespace, customDomain, placement)
 	case DTPage:
 		panel, err = deployPagesProject(ctx, projectName, uid, trPass, proxyIP, nat64Prefix, fallback, subPath, kvNamespace, customDomain)
 	}
