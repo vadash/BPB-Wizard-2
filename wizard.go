@@ -9,7 +9,6 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -53,73 +52,45 @@ const (
 	DomainRegex              = `^(?i)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$`
 )
 
-func downloadFile(url string) ([]byte, error) {
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			if len(via) >= 10 {
-				return fmt.Errorf("stopped after 10 redirects")
-			}
-
-			if req.URL.Scheme != "https" || !isTrustedWorkerDownloadHost(req.URL.Hostname()) {
-				return fmt.Errorf("untrusted worker.js redirect target: %s", req.URL.String())
-			}
-
-			return nil
-		},
-		Timeout: 60 * time.Second,
-	}
-
-	resp, err := client.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.Request.URL.Scheme != "https" || !isTrustedWorkerDownloadHost(resp.Request.URL.Hostname()) {
-		return nil, fmt.Errorf("untrusted worker.js download source: %s", resp.Request.URL.String())
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error downloading worker.js: %s", resp.Status)
-	}
-
-	content, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	sum := sha256.Sum256(content)
-	fmt.Printf("%s worker.js SHA-256: %x\n", info, sum)
-	return content, nil
-}
-
-func isTrustedWorkerDownloadHost(host string) bool {
-	return host == "github.com" ||
-		host == "githubusercontent.com" ||
-		strings.HasSuffix(host, ".githubusercontent.com")
-}
-
-func downloadWorker() error {
-	fmt.Printf("\n%s Downloading %s...\n", title, fmtStr("worker.js", GREEN, true))
+func loadWorker() error {
+	fmt.Printf("\n%s Loading %s...\n", title, fmtStr("worker.js", GREEN, true))
 
 	for {
 		if workerJS != nil {
-			successMessage("worker.js already exists in memory, skipping download.")
+			successMessage("worker.js already exists in memory, skipping load.")
 			return nil
 		}
 
-		content, err := downloadFile(workerURL)
-		if err != nil {
-			failMessage("Failed to download worker.js\n")
+		path := promptUser("- Please enter the local path to worker.js: ", nil)
+		path = strings.TrimSpace(strings.Trim(path, `"'`))
+
+		if path == "" {
+			failMessage("Path cannot be empty.")
+			continue
+		}
+
+		if _, err := os.Stat(path); err != nil {
+			failMessage(fmt.Sprintf("File not found: %s", path))
 			log.Printf("%v\n", err)
-			if response := promptUser("- Would you like to try again? (y/n): ", []string{"y", "n"}); strings.ToLower(response) == "n" {
-				os.Exit(0)
-			}
+			continue
+		}
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			failMessage(fmt.Sprintf("Failed to read file: %s", path))
+			log.Printf("%v\n", err)
+			continue
+		}
+
+		if len(content) == 0 {
+			failMessage("worker.js file is empty.")
 			continue
 		}
 
 		workerJS = content
-		successMessage("worker.js downloaded successfully!")
+		sum := sha256.Sum256(content)
+		fmt.Printf("%s worker.js SHA-256: %x\n", info, sum)
+		successMessage("worker.js loaded successfully!")
 		return nil
 	}
 }
@@ -586,7 +557,7 @@ func createPanel() {
 	}
 
 	var panel string
-	if err := downloadWorker(); err != nil {
+	if err := loadWorker(); err != nil {
 		failMessage("Failed to download worker.js")
 		log.Fatalln(err)
 	}
@@ -679,7 +650,7 @@ func modifyPanel() {
 			switch response {
 			case "1":
 
-				if err := downloadWorker(); err != nil {
+				if err := loadWorker(); err != nil {
 					failMessage("Failed to download worker.js")
 					log.Fatalln(err)
 				}
