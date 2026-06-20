@@ -10,10 +10,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -238,33 +235,6 @@ func successMessage(message string) {
 	fmt.Printf("%s %s\n", succMark, message)
 }
 
-func openURL(url string) error {
-	var cmd string
-	var args = []string{url}
-
-	switch runtime.GOOS {
-	case "darwin": // MacOS
-		cmd = "open"
-	case "windows": // Windows
-		cmd = "rundll32"
-		args = []string{"url.dll,FileProtocolHandler", url}
-	default: // Linux, BSD, Android, etc.
-		if isAndroid {
-			termuxBin := os.Getenv("PATH")
-			cmd = filepath.Join(termuxBin, "termux-open-url")
-		} else {
-			cmd = "xdg-open"
-		}
-	}
-
-	err := exec.Command(cmd, args...).Start()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func checkPanel(url string) error {
 	// ticker := time.NewTicker(5 * time.Second)
 	// defer ticker.Stop()
@@ -316,16 +286,7 @@ func checkPanel(url string) error {
 	// 	resp.Body.Close()
 	message := fmt.Sprintf("\u0042\u0050\u0042 panel is ready -> %s", fmtStr(url, BLUE, true))
 	successMessage(message)
-	prompt := fmt.Sprintf("- Would you like to open %s in browser? (y/n): ", fmtStr("\u0042\u0050\u0042 panel", BLUE, true))
-
-	if response := promptUser(prompt, []string{"y", "n"}); strings.ToLower(response) == "n" {
-		return nil
-	}
-
-	if err := openURL(url); err != nil {
-		return err
-	}
-
+	fmt.Printf("- Open the following URL in your browser:\n\n  %s\n\n", fmtStr(url, BLUE, true))
 	return nil
 	// }
 

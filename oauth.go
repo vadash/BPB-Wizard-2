@@ -121,10 +121,7 @@ func login() {
 	url := generateAuthURL()
 	fmt.Printf("\n%s Login %s...\n", title, fmtStr("Cloudflare", ORANGE, true))
 
-	if err := openURL(url); err != nil {
-		failMessage("Failed to login.")
-		log.Fatalln(err)
-	}
+	fmt.Printf("- Open the following URL in your browser to authenticate:\n\n  %s\n\n", fmtStr(url, BLUE, true))
 }
 
 func ensureCloudflareAuth(ctx context.Context) error {
