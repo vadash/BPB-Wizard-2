@@ -58,8 +58,22 @@ func loadWorker() error {
 			return nil
 		}
 
-		path := promptUser("- Please enter the local path to worker.js: ", nil)
+		savedPath := loadSavedWorkerPath()
+		prompt := "- Please enter the local path to worker.js: "
+		if savedPath != "" {
+			if _, err := os.Stat(savedPath); err == nil {
+				prompt = fmt.Sprintf("- Please enter the local path to worker.js [%s]: ", fmtStr(savedPath, ORANGE, true))
+			}
+		}
+
+		path := promptUser(prompt, nil)
 		path = strings.TrimSpace(strings.Trim(path, `"'`))
+
+		if path == "" && savedPath != "" {
+			if _, err := os.Stat(savedPath); err == nil {
+				path = savedPath
+			}
+		}
 
 		if path == "" {
 			failMessage("Path cannot be empty.")
@@ -85,6 +99,9 @@ func loadWorker() error {
 		}
 
 		workerJS = content
+		if err := saveWorkerPath(path); err != nil {
+			log.Printf("Warning: could not save worker path: %v\n", err)
+		}
 		sum := sha256.Sum256(content)
 		fmt.Printf("%s worker.js SHA-256: %x\n", info, sum)
 		successMessage("worker.js loaded successfully!")

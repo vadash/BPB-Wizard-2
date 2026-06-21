@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -102,4 +103,50 @@ func fmtStr(str string, color string, isBold bool) string {
 	}
 
 	return style.Render(str)
+}
+
+type workerPathStore struct {
+	Path string `json:"path"`
+}
+
+func savedWorkerPathConfig() string {
+	dir, err := os.UserConfigDir()
+	if err != nil || dir == "" {
+		if home, homeErr := os.UserHomeDir(); homeErr == nil {
+			dir = filepath.Join(home, ".config")
+		} else {
+			dir = "."
+		}
+	}
+
+	return filepath.Join(dir, tokenStoreService, "worker-path.json")
+}
+
+func loadSavedWorkerPath() string {
+	data, err := os.ReadFile(savedWorkerPathConfig())
+	if err != nil {
+		return ""
+	}
+
+	var store workerPathStore
+	if err := json.Unmarshal(data, &store); err != nil {
+		return ""
+	}
+
+	return store.Path
+}
+
+func saveWorkerPath(path string) error {
+	store := workerPathStore{Path: path}
+	data, err := json.MarshalIndent(store, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	configPath := savedWorkerPathConfig()
+	if err := os.MkdirAll(filepath.Dir(configPath), 0700); err != nil {
+		return err
+	}
+
+	return os.WriteFile(configPath, data, 0600)
 }
