@@ -189,7 +189,7 @@ func createWorker(ctx context.Context, name string, uid string, pass string, pro
 				"nodejs_compat",
 			},
 			Observability: map[string]bool{"enabled": false},
-			Placement:     map[string]string{"mode": "smart", "region": placement},
+			Placement:     map[string]string{"region": placement},
 			Tags:          []string{},
 			TailConsumers: []string{},
 			Logpush:       false,
