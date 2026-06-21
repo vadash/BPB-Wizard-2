@@ -484,17 +484,17 @@ func createPanel() {
 		}
 
 		if deployType == DTWorker {
-			fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Placement region", GREEN, true), fmtStr("azure:finlandcentral", ORANGE, true))
+			fmt.Printf("\n%s The default %s is: %s", info, fmtStr("Placement region", GREEN, true), fmtStr("azure:westeurope", ORANGE, true))
 			if response := promptUser("- Please enter a custom Placement region or press ENTER to use default: ", nil); response != "" {
 				placement = response
 			} else {
-				placement = "azure:finlandcentral"
+				placement = "azure:westeurope"
 			}
 		}
 	}
 
 	if deployType == DTWorker && placement == "" {
-		placement = "azure:finlandcentral"
+		placement = "azure:westeurope"
 	}
 
 	fmt.Printf("\n%s Creating KV namespace...\n", title)
